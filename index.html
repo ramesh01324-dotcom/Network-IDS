@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Network IDS</title>
+    <style>
+        body { 
+            background-color: #0d1117; 
+            color: #c9d1d9; 
+            font-family: 'Courier New', Courier, monospace; 
+            padding: 20px; 
+        }
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #30363d;
+            padding-bottom: 10px;
+        }
+        h1 { color: #58a6ff; margin: 0; }
+        
+        /* Download Button Styling */
+        .download-btn {
+            background-color: #238636;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            font-family: 'Courier New', Courier, monospace;
+            font-weight: bold;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .download-btn:hover {
+            background-color: #2ea043;
+        }
+
+        .alert-box { 
+            background-color: #370000; 
+            border: 2px solid #ff0000; 
+            padding: 10px; 
+            margin-top: 20px; 
+            margin-bottom: 20px; 
+            color: #ff8888; 
+            display: none; 
+            border-radius: 5px;
+        }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; box-shadow: 0 0 10px rgba(0,255,0,0.1); }
+        th, td { border: 1px solid #30363d; padding: 12px; text-align: left; }
+        th { background-color: #21262d; color: #58a6ff; font-weight: bold; }
+        
+        .suspicious-yes { background-color: #440000; color: #ff4444; font-weight: bold; }
+        .suspicious-no { color: #7ee787; }
+    </style>
+</head>
+<body>
+
+    <div class="header-container">
+        <h1>🛡️ Intrusion Detection System (IDS)</h1>
+        <!-- User jab chahe tab click karke file download karega -->
+        <a href="/download_logs" class="download-btn">📥 Download Traffic Logs</a>
+    </div>
+
+    <div id="alerts" class="alert-box">
+        <h2>⚠️ THREAT ALERTS ⚠️</h2>
+        <ul id="alert-list"></ul>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Source IP</th>
+                <th>Destination IP</th>
+                <th>Protocol</th>
+                <th>Port</th>
+                <th>Suspicious?</th>
+                <th>Reason</th>
+            </tr>
+        </thead>
+        <tbody id="table-body">
+        </tbody>
+    </table>
+
+    <script>
+        function fetchNetworkData() {
+            fetch('/get_data')
+            .then(response => response.json())
+            .then(data => {
+                const alertBox = document.getElementById('alerts');
+                const alertList = document.getElementById('alert-list');
+                
+                if (data.alerts.length > 0) {
+                    alertBox.style.display = 'block';
+                    alertList.innerHTML = '';
+                    data.alerts.forEach(alert => {
+                        let li = document.createElement('li');
+                        li.innerText = alert;
+                        alertList.appendChild(li);
+                    });
+                } else {
+                    alertBox.style.display = 'none';
+                }
+
+                const tableBody = document.getElementById('table-body');
+                tableBody.innerHTML = '';
+                
+                data.packets.forEach(pkt => {
+                    let rowClass = pkt.suspicious === 'Yes' ? 'suspicious-yes' : 'suspicious-no';
+                    let row = `<tr class="${rowClass}">
+                        <td>${pkt.src}</td>
+                        <td>${pkt.dst}</td>
+                        <td>${pkt.proto}</td>
+                        <td>${pkt.port}</td>
+                        <td>${pkt.suspicious}</td>
+                        <td>${pkt.reason}</td>
+                    </tr>`;
+                    tableBody.innerHTML += row;
+                });
+            });
+        }
+
+        setInterval(fetchNetworkData, 1500);
+        fetchNetworkData();
+    </script>
+</body>
+</html>
